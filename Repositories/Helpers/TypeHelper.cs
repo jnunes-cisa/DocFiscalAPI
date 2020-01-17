@@ -1,0 +1,75 @@
+using System;
+using System.Reflection;
+
+namespace Repositories.Helpers
+{
+
+    public static class TypeHelper
+    {
+
+        public static object ConvertType(object value, Type type)
+        {
+
+            if (value == null)
+                return null;
+
+            var valueType = value.GetType();
+
+            try
+            {
+
+                if (valueType == type || type.IsAssignableFrom(valueType))
+                    return value;
+
+                type = Nullable.GetUnderlyingType(type) ?? type;
+
+                var stringValue = value.ToString();
+
+                if (string.IsNullOrEmpty(stringValue))
+                    return GetDefaultType(type);
+
+                if (type == typeof(Guid))
+                    return Guid.Parse(stringValue);
+
+                if (type == typeof(DateTimeOffset))
+                    return DateTimeOffset.Parse(stringValue);
+
+                if (type.GetTypeInfo().IsEnum)
+                    return Enum.Parse(type, stringValue);
+
+                return Convert.ChangeType(stringValue, type);
+
+            }
+            catch (Exception ex)
+            {
+
+                throw new FormatException($"{ valueType } não pode ser convertido { type }", ex);
+
+            }
+
+        }
+
+        private static object GetDefaultType(Type type)
+        {
+
+            if (type.GetTypeInfo().IsValueType)
+            {
+
+                return Activator.CreateInstance(type);
+
+            }
+
+            return null;
+
+        }
+
+        public static T ConvertType<T>(object value)
+        {
+
+            return (T)ConvertType(value, typeof(T));
+
+        }
+
+    }
+
+}

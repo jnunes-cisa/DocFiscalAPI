@@ -72,7 +72,6 @@ namespace WebApi
                 .AddCors()
                 .AddMvc(options =>
                 {
-
                     if (UseAuthorize)
                     {
                         options.Filters.Add(new AuthorizeFilter(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build()));
@@ -98,8 +97,7 @@ namespace WebApi
                     c.IncludeXmlComments($"{System.AppDomain.CurrentDomain.BaseDirectory}Entities.xml");                    
                    
                     if (UseAzureAD)
-                    {
-                        //Define the OAuth2.0 scheme that's in use (i.e. Implicit Flow)
+                    {                        
                         c.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
                         {
                             Type = SecuritySchemeType.OAuth2,
@@ -107,7 +105,7 @@ namespace WebApi
                             {
                                 Implicit = new OpenApiOAuthFlow
                                 {
-                                    AuthorizationUrl = new Uri($"https://login.microsoftonline.com/{"be013de1-c776-4eb9-a825-61d5d8b9aca2"}/oauth2/authorize", UriKind.Absolute),
+                                    AuthorizationUrl = new Uri($"https://login.microsoftonline.com/{"be013de1-c776-4eb9-a825-61d5d8b9aca2"}/oauth2/authorize", UriKind.RelativeOrAbsolute),
                                     Scopes = new Dictionary<string, string>
                                     {
                                         { "user_impersonation", "Access PedidoWebApi" }
@@ -121,8 +119,9 @@ namespace WebApi
             }
 
             if (UseInMemoryDataBase)
-                // services.AddDbContext<BaseContext>(options => options.UseInMemoryDatabase("DataBaseInMemory"));
-                services.AddDbContext<BaseContext>(options => options.UseSqlServer(Configuration.GetConnectionString("ConnectionString")), ServiceLifetime.Scoped);
+            {               
+                services.AddDbContext<BaseContext>(options => options.UseSqlite("DataSource=:memory:").EnableSensitiveDataLogging());
+            }                
             else
                 services.AddDbContext<BaseContext>(options => options.UseSqlServer(Configuration.GetConnectionString("ConnectionString")), ServiceLifetime.Scoped);
 
